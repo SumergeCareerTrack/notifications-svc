@@ -1,8 +1,6 @@
 package com.sumerge.careertrack.notifications_svc.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.IdClass;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,14 +12,21 @@ import java.util.UUID;
 @Entity
 @Data
 @Builder
-@IdClass(NotificationId.class)
 @AllArgsConstructor
 @NoArgsConstructor
-
+@Table(name = "Notification",
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"notificationData", "receiverID"})})
 public class Notification implements Serializable {
+
     @Id
-    private String notificationData;
-    @Id
+    @GeneratedValue
+    private UUID notificationID;
+
+    @ManyToOne
+    @JoinColumn(name = "notificationData", nullable = false)
+    private NotificationData notificationData;
+
     private UUID receiverID;
+
     private boolean seen;
 }
