@@ -42,62 +42,47 @@ public class KafkaConsumerService {
             dltTopicSuffix = "-dead-t")
     @KafkaListener(topics ="${kafka.topic.name}", groupId = "${spring.kafka.consumer.group-id}")
     public void listen(String messageJson) throws Exception {
+        JSONObject jsonObject = new JSONObject(messageJson);
+        SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
+        Date date = formatter.parse(jsonObject.getString("date"));
         try{
-            NotificationRequestDTO notificationRequest = parseJsonToDTO(messageJson);
+            NotificationRequestDTO notificationRequest = NotificationRequestDTO.builder()
+                    .actionName(mapAction(jsonObject.getString("actionName").toLowerCase()))
+                    .actorId(UUID.fromString(jsonObject.getString("actorId")))
+                    .entityId(UUID.fromString(jsonObject.getString("entityId")))
+                    .entityTypeName(mapEntityType(jsonObject.getString("entityTypeName").toLowerCase()))
+                    .date(date)
+                    .receiverID(IntStream.range(0, jsonObject.getJSONArray("receiverID").length())
+                            .mapToObj(jsonObject.getJSONArray("receiverID")::getString)
+                            .map(UUID::fromString)
+                            .collect(Collectors.toList()))
+                    .seen(jsonObject.getBoolean("seen"))
+                    .build();
             NotificationResponseDTO notification = notificationService.createNotification(notificationRequest);
             System.out.println("Saved: " + notification);
         } catch (Exception e) {
             System.err.println("Error processing message: " + messageJson);
-            // Send the message to DLT
+            System.err.println(e.getMessage());
             kafkaTemplate.send("DLT_Topic", messageJson);
             System.out.println("Sent message to DLT: " + messageJson);
         }
 
     }
-
-    private NotificationRequestDTO parseJsonToDTO(String jsonString) {
-        JSONObject jsonObject = new JSONObject(jsonString);
-        JSONArray uuidStrings = jsonObject.getJSONArray("receiverID");
-        System.out.println(uuidStrings);
-        List<UUID> receivers = IntStream.range(0, uuidStrings.length())
-                .mapToObj(uuidStrings::getString)    // Map each index to a UUID string
-                .map(UUID::fromString)               // Convert each string to a UUID
-                .toList();
-        NotificationRequestDTO notificationRequest = new NotificationRequestDTO();
-        notificationRequest.setReceiverID(receivers);
-        notificationRequest.setActorId(UUID.fromString(jsonObject.getString("actorId")));
-        notificationRequest.setEntityId(UUID.fromString(jsonObject.getString("entityId")));
-        notificationRequest.setEntityTypeName(
-                mapEntityType(jsonObject.getString("entityTypeName").toLowerCase()));
-        notificationRequest.setActionName(
-                mapAction(jsonObject.getString("actionName").toLowerCase()));
-        String dateString = jsonObject.getString("date");
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        try {
-            Date date = dateFormat.parse(dateString);
-            notificationRequest.setDate(date);
-        } catch (ParseException e) {
-            System.err.println("Date parsing failed: " + e.getMessage());
-            notificationRequest.setDate(null);
-        }
-        notificationRequest.setSeen(jsonObject.getBoolean("seen"));
-        return notificationRequest;
-    }
-
-public EntityTypeEnum mapEntityType(String entityTypeName) {
+public EntityTypeEnum mapEntityType(String entityTypeName) throws Exception {
     return switch (entityTypeName) {
         case "learning" -> EntityTypeEnum.LEARNING;
         case "blog" -> EntityTypeEnum.BLOG;
         case "wiki" -> EntityTypeEnum.WIKI;
-        default -> EntityTypeEnum.NOTIFICATION;
+        default -> throw new Exception("Does not Exist");
     };
     }
 
-    public ActionEnum mapAction(String actionName) {
+    public ActionEnum mapAction(String actionName) throws Exception {
         return switch (actionName) {
             case "approval" -> ActionEnum.APPROVAL;
             case "rejection" -> ActionEnum.REJECTION;
-            default -> ActionEnum.SUBMISSION;
+            case "submission" -> ActionEnum.SUBMISSION;
+            default -> throw new Exception("Does not Exist");
         };
     }
 
