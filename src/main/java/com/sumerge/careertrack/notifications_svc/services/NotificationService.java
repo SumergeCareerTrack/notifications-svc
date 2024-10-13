@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -47,8 +48,7 @@ public class NotificationService {
                 notificationRequestDTO.getActorId(),
                 action
         )) {
-            System.out.println("Already Exists");
-            return null;
+            throw new Exception("Notification already exists");
         }
 
         NotificationData savedData = notificationDataRepository.save(data);
@@ -56,7 +56,6 @@ public class NotificationService {
         Notification notification = new Notification();
         notification.setNotificationData(savedData);
         notification.setSeen(notificationRequestDTO.isSeen());
-        //TODO RECIEVER ID SHOULD BE LIST
         notification.setReceiverID(notificationRequestDTO.getReceiverID());
         Notification savedNotification = notificationRepository.save(notification);
 
@@ -70,10 +69,13 @@ public class NotificationService {
                 .build();
     }
 
-    public List<NotificationResponseDTO> getNotificationByReceiverID(String receiverID) {
-        List<Notification> notifications=notificationRepository.findByReceiverID(UUID.fromString(receiverID));
-        return notifications.stream().map(notificationMapper::toNotificationResponse).toList();
+    public List<NotificationResponseDTO> getNotificationByReceiverID(String receiverId) {
+        List<Notification> notifications = notificationRepository.findByReceiverID(UUID.fromString(receiverId));
+        return notifications.stream()
+                .map(notificationMapper::toNotificationResponse)
+                .collect(Collectors.toList());
     }
+
 
 
 }

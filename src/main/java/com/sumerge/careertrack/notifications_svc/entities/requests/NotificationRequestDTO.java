@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -16,7 +17,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class NotificationRequestDTO {
 
-    private UUID receiverID;
+    private List<UUID> receiverID;
     private UUID actorId;
     private ActionEnum actionName;
     private UUID entityId;

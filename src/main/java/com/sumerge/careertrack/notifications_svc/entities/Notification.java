@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -16,7 +17,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Table(name = "Notification",
         uniqueConstraints = {@UniqueConstraint(columnNames = {"notificationData", "receiverID"})})
-public class Notification implements Serializable {
+public class Notification  {
 
     @Id
     @GeneratedValue
@@ -26,7 +27,8 @@ public class Notification implements Serializable {
     @JoinColumn(name = "notificationData", nullable = false)
     private NotificationData notificationData;
 
-    private UUID receiverID;
+    @ElementCollection
+    private List<UUID> receiverID;
 
     private boolean seen;
 }
