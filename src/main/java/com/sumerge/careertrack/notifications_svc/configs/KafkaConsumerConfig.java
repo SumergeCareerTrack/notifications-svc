@@ -1,6 +1,5 @@
 package com.sumerge.careertrack.notifications_svc.configs;
 
-import com.sumerge.careertrack.notifications_svc.entities.Notification;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -10,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
+import org.springframework.kafka.support.converter.StringJsonMessageConverter;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 
 import java.util.HashMap;
@@ -30,17 +30,21 @@ public class KafkaConsumerConfig {
         return props;
     }
     @Bean
-    public ConsumerFactory<String, Notification> consumerFactory(){
+    public ConsumerFactory<String, String> consumerFactory(){
         return new DefaultKafkaConsumerFactory<>(consumerConfig(),
-                new StringDeserializer(),new JsonDeserializer<>(Notification.class));
+                new StringDeserializer(),new JsonDeserializer<>(String.class));
     }
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, Notification> notificationKafkaListenerContainerFactory(
-            ConsumerFactory<String, Notification> consumerFactory
+    public ConcurrentKafkaListenerContainerFactory<String, String> notificationKafkaListenerContainerFactory(
+            ConsumerFactory<String, String> consumerFactory
     ) {
-        ConcurrentKafkaListenerContainerFactory<String, Notification> factory =
+        ConcurrentKafkaListenerContainerFactory<String, String> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
         return factory;
+    }
+    @Bean
+    public StringJsonMessageConverter jsonMessageConverter() {
+        return new StringJsonMessageConverter();
     }
 }
