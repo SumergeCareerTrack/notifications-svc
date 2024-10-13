@@ -1,6 +1,7 @@
 package com.sumerge.careertrack.notifications_svc.entities;
 
 
+import com.sumerge.careertrack.notifications_svc.entities.enums.ActionEnum;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;

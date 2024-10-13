@@ -1,6 +1,7 @@
 package com.sumerge.careertrack.notifications_svc.entities;
 
 
+import com.sumerge.careertrack.notifications_svc.entities.enums.EntityTypeEnum;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
@@ -15,5 +16,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class EntitiesType {
     @Id
-    private String name;
+    private EntityTypeEnum name;
 }
