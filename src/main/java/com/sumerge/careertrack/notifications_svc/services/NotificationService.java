@@ -33,7 +33,7 @@ public class NotificationService {
     private final NotificationMapper notificationMapper;
 
 
-    public NotificationResponseDTO createNotification(NotificationRequestDTO notificationRequestDTO) throws AlreadyExistsException {
+    public List<NotificationResponseDTO> createNotification(NotificationRequestDTO notificationRequestDTO) throws AlreadyExistsException {
         Actions action = actionsRepository.findByName(ActionEnum.valueOf(String.valueOf(notificationRequestDTO.getActionName())));
         EntitiesType entitiesType = entitiesTypeRepository.findByName(EntityTypeEnum.valueOf(String.valueOf(notificationRequestDTO.getEntityTypeName())));
         NotificationData data = toNotificationData(notificationRequestDTO, action, entitiesType);
@@ -43,14 +43,16 @@ public class NotificationService {
                 notificationRequestDTO.getActorId(),
                 action)) {throw new AlreadyExistsException(
                         AlreadyExistsException.NOTIFICATION,
-                        notificationRequestDTO.getActorId(),
-                        action,
-                        notificationRequestDTO.getEntityId()
+                            notificationRequestDTO.getActorId(),
+                            action,
+                            notificationRequestDTO.getEntityId()
         );}
 
         NotificationData savedData = notificationDataRepository.save(data);
-        Notification savedNotification = createNotificationHelper(savedData, notificationRequestDTO);
-
+        List<Notification> savedNotification = notificationRequestDTO.getReceiverID()
+                .stream()
+                .map(id -> createNotificationHelper(savedData, notificationRequestDTO, id))
+                .collect(Collectors.toList());
         return toNotificationResponse(savedNotification, savedData, action, entitiesType);
     }
 
@@ -65,26 +67,29 @@ public class NotificationService {
                 .build();
     }
 
-    private Notification createNotificationHelper(NotificationData savedData, NotificationRequestDTO notificationRequestDTO) {
+    private Notification createNotificationHelper(NotificationData savedData, NotificationRequestDTO notificationRequestDTO,UUID id) {
         Notification notification = new Notification();
         notification.setNotificationData(savedData);
         notification.setSeen(notificationRequestDTO.isSeen());
-        notification.setReceiverID(notificationRequestDTO.getReceiverID());
+        notification.setReceiverID(id);
         return notificationRepository.save(notification);
     }
-    private NotificationResponseDTO toNotificationResponse(Notification savedNotification, NotificationData savedData, Actions action, EntitiesType entitiesType) {
-        return NotificationResponseDTO.builder()
-                .id(savedNotification.getNotificationID()) // Assuming Notification has a getId() method
-                .entityId(savedData.getEntityId())
-                .actorId(savedData.getActorId())
-                .name(action.getName())
-                .entityTypeName(entitiesType.getName()) // Assuming EntitiesType has a getName() method
-                .date(savedData.getDate())
-                .build();
+    private List<NotificationResponseDTO> toNotificationResponse(List<Notification> savedNotification, NotificationData savedData, Actions action, EntitiesType entitiesType) {
+        return savedNotification.stream()
+                .map(notification -> NotificationResponseDTO.builder()
+                        .id(notification.getNotificationID()) // Assuming Notification has a getId() method
+                        .entityId(savedData.getEntityId())
+                        .actorId(savedData.getActorId())
+                        .name(action.getName())
+                        .entityTypeName(entitiesType.getName()) // Assuming EntitiesType has a getName() method
+                        .date(savedData.getDate())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     public List<NotificationResponseDTO> getNotificationByReceiverID(String receiverId) {
         List<Notification> notifications = notificationRepository.findByReceiverID(UUID.fromString(receiverId));
+        System.out.println(notifications);
         return notifications.stream()
                 .map(notificationMapper::toNotificationResponse)
                 .collect(Collectors.toList());

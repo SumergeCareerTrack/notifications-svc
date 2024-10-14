@@ -6,8 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
-import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -27,8 +25,8 @@ public class Notification  {
     @JoinColumn(name = "notificationData", nullable = false)
     private NotificationData notificationData;
 
-    @ElementCollection
-    private List<UUID> receiverID;
+
+    private UUID receiverID;
 
     private boolean seen;
 }

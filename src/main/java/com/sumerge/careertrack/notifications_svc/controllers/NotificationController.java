@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/notifications")
@@ -17,8 +18,15 @@ public class NotificationController {
 
 
     @GetMapping("/{receiverId}")
-    public ResponseEntity<List<NotificationResponseDTO>> getNotificationByReceiverId(@PathVariable String receiverId) {
+    public ResponseEntity<List<NotificationResponseDTO>> getNotificationByReceiverId(
+            @PathVariable String receiverId,
+            @RequestParam(required = false) Boolean filterBySeen) {
         List<NotificationResponseDTO> response = notificationService.getNotificationByReceiverID(receiverId);
+        if (filterBySeen != null) {
+            response = response.stream()
+                    .filter(notification -> notification.isSeen() == filterBySeen)
+                    .collect(Collectors.toList());
+        }
         return ResponseEntity.ok(response);
     }
 

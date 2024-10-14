@@ -26,8 +26,6 @@ import java.util.stream.IntStream;
 @Service
 @AllArgsConstructor
 public class KafkaConsumerService {
-    private final KafkaTemplate<String, String> kafkaTemplate;
-
 
     private final NotificationService notificationService;
 
@@ -42,7 +40,8 @@ public class KafkaConsumerService {
         SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
         Date date = formatter.parse(jsonObject.getString("date"));
             NotificationRequestDTO notificationRequest = toNotificationRequestDTo(jsonObject,date);
-            NotificationResponseDTO notification = notificationService.createNotification(notificationRequest);
+
+            List<NotificationResponseDTO> notification = notificationService.createNotification(notificationRequest);
             System.out.println("Saved: " + notification);
 
 
