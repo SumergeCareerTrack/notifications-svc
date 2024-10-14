@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -95,7 +96,16 @@ public class NotificationService {
                 .collect(Collectors.toList());
     }
 
-
+    public NotificationResponseDTO setSeenNotification(String notificationId) {
+        Optional<Notification> notification = notificationRepository.findById(UUID.fromString(notificationId));
+        if(notification.isEmpty()){
+            throw new DoesNotExistException(DoesNotExistException.NOTIFICATION, UUID.fromString(notificationId));
+        }
+        Notification found= notification.get();
+        found.setSeen(true);
+        Notification savedNotification = notificationRepository.save(found);
+        return notificationMapper.toNotificationResponse(savedNotification);
+    }
 
 
 }

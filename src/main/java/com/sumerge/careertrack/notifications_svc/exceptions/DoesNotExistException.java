@@ -4,6 +4,7 @@ public class DoesNotExistException extends NotificationsException {
 
     public static final String ENTITY_NAME = "Entity name 0\"%s\" does not exist.";
     public static final String ACTION = "Action \"%s\" does not exist.";
+    public static final String NOTIFICATION = "NOTIFICATION \"%s\" does not exist.";
 
 
     public DoesNotExistException() {

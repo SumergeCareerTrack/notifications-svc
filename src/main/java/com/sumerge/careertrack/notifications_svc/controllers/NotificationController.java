@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@CrossOrigin
 @RestController
 @RequestMapping("/notifications")
 @AllArgsConstructor
@@ -27,6 +28,13 @@ public class NotificationController {
                     .filter(notification -> notification.isSeen() == filterBySeen)
                     .collect(Collectors.toList());
         }
+        return ResponseEntity.ok(response);
+    }
+    @PutMapping("/{notificationId}")
+    public ResponseEntity<NotificationResponseDTO> updateSeenNotification(
+            @PathVariable String notificationId
+            ) {
+        NotificationResponseDTO response = notificationService.setSeenNotification(notificationId);
         return ResponseEntity.ok(response);
     }
 

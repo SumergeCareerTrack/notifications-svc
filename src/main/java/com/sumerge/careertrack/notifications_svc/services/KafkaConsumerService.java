@@ -8,6 +8,7 @@ import com.sumerge.careertrack.notifications_svc.entities.requests.NotificationR
 import com.sumerge.careertrack.notifications_svc.entities.responses.NotificationResponseDTO;
 import com.sumerge.careertrack.notifications_svc.exceptions.AlreadyExistsException;
 import com.sumerge.careertrack.notifications_svc.exceptions.DoesNotExistException;
+import com.sumerge.careertrack.notifications_svc.exceptions.NotificationsException;
 import lombok.AllArgsConstructor;
 import org.json.JSONObject;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -29,22 +30,18 @@ public class KafkaConsumerService {
 
     private final NotificationService notificationService;
 
-//
-    @RetryableTopic(include = {Exception.class},
-            attempts = "1",
-            backoff = @Backoff(delay = 1000, multiplier = 1))
+
+    @RetryableTopic(include = {NotificationsException.class,ParseException.class},
+            attempts = "1")
     @KafkaListener(topics ="${kafka.topic.name}", groupId = "${spring.kafka.consumer.group-id}")
 
     public void listen(String messageJson) throws DoesNotExistException, AlreadyExistsException, ParseException {
         JSONObject jsonObject = new JSONObject(messageJson);
         SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
         Date date = formatter.parse(jsonObject.getString("date"));
-            NotificationRequestDTO notificationRequest = toNotificationRequestDTo(jsonObject,date);
-
-            List<NotificationResponseDTO> notification = notificationService.createNotification(notificationRequest);
-            System.out.println("Saved: " + notification);
-
-
+        NotificationRequestDTO notificationRequest = toNotificationRequestDTo(jsonObject,date);
+        List<NotificationResponseDTO> notification = notificationService.createNotification(notificationRequest);
+        System.out.println("Saved: " + notification);
     }
     private NotificationRequestDTO toNotificationRequestDTo(JSONObject jsonObject,Date date) throws DoesNotExistException {
         return NotificationRequestDTO.builder()
