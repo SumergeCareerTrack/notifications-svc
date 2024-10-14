@@ -8,6 +8,8 @@ import com.sumerge.careertrack.notifications_svc.entities.enums.ActionEnum;
 import com.sumerge.careertrack.notifications_svc.entities.enums.EntityTypeEnum;
 import com.sumerge.careertrack.notifications_svc.entities.requests.NotificationRequestDTO;
 import com.sumerge.careertrack.notifications_svc.entities.responses.NotificationResponseDTO;
+import com.sumerge.careertrack.notifications_svc.exceptions.AlreadyExistsException;
+import com.sumerge.careertrack.notifications_svc.exceptions.DoesNotExistException;
 import com.sumerge.careertrack.notifications_svc.mappers.NotificationMapper;
 import com.sumerge.careertrack.notifications_svc.repositories.ActionsRepository;
 import com.sumerge.careertrack.notifications_svc.repositories.EntitiesTypeRepository;
@@ -31,34 +33,46 @@ public class NotificationService {
     private final NotificationMapper notificationMapper;
 
 
-    public NotificationResponseDTO createNotification(NotificationRequestDTO notificationRequestDTO) throws Exception {
+    public NotificationResponseDTO createNotification(NotificationRequestDTO notificationRequestDTO) throws AlreadyExistsException {
         Actions action = actionsRepository.findByName(ActionEnum.valueOf(String.valueOf(notificationRequestDTO.getActionName())));
         EntitiesType entitiesType = entitiesTypeRepository.findByName(EntityTypeEnum.valueOf(String.valueOf(notificationRequestDTO.getEntityTypeName())));
+        NotificationData data = toNotificationData(notificationRequestDTO, action, entitiesType);
 
-        NotificationData data = NotificationData.builder()
+        if (notificationDataRepository.existsByEntityIdAndActorIdAndActionId(
+                notificationRequestDTO.getEntityId(),
+                notificationRequestDTO.getActorId(),
+                action)) {throw new AlreadyExistsException(
+                        AlreadyExistsException.NOTIFICATION,
+                        notificationRequestDTO.getActorId(),
+                        action,
+                        notificationRequestDTO.getEntityId()
+        );}
+
+        NotificationData savedData = notificationDataRepository.save(data);
+        Notification savedNotification = createNotificationHelper(savedData, notificationRequestDTO);
+
+        return toNotificationResponse(savedNotification, savedData, action, entitiesType);
+    }
+
+    private NotificationData toNotificationData(NotificationRequestDTO notificationRequestDTO,
+                                                Actions action, EntitiesType entitiesType) {
+        return NotificationData.builder()
                 .actionId(action)
                 .entityTypeName(entitiesType)
                 .entityId(notificationRequestDTO.getEntityId())
                 .actorId(notificationRequestDTO.getActorId())
                 .date(notificationRequestDTO.getDate())
                 .build();
+    }
 
-        if (notificationDataRepository.existsByEntityIdAndActorIdAndActionId(
-                notificationRequestDTO.getEntityId(),
-                notificationRequestDTO.getActorId(),
-                action
-        )) {
-            throw new Exception("Notification already exists");
-        }
-
-        NotificationData savedData = notificationDataRepository.save(data);
-
+    private Notification createNotificationHelper(NotificationData savedData, NotificationRequestDTO notificationRequestDTO) {
         Notification notification = new Notification();
         notification.setNotificationData(savedData);
         notification.setSeen(notificationRequestDTO.isSeen());
         notification.setReceiverID(notificationRequestDTO.getReceiverID());
-        Notification savedNotification = notificationRepository.save(notification);
-
+        return notificationRepository.save(notification);
+    }
+    private NotificationResponseDTO toNotificationResponse(Notification savedNotification, NotificationData savedData, Actions action, EntitiesType entitiesType) {
         return NotificationResponseDTO.builder()
                 .id(savedNotification.getNotificationID()) // Assuming Notification has a getId() method
                 .entityId(savedData.getEntityId())
@@ -75,6 +89,7 @@ public class NotificationService {
                 .map(notificationMapper::toNotificationResponse)
                 .collect(Collectors.toList());
     }
+
 
 
 
