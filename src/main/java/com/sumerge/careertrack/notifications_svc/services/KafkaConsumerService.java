@@ -63,6 +63,7 @@ public class KafkaConsumerService {
             case "learning" -> EntityTypeEnum.LEARNING;
             case "blog" -> EntityTypeEnum.BLOG;
             case "wiki" -> EntityTypeEnum.WIKI;
+            case "career_package"-> EntityTypeEnum.CAREER_PACKAGE;
             default -> throw new DoesNotExistException(DoesNotExistException.ENTITY_NAME,entityTypeName);
 
         };
