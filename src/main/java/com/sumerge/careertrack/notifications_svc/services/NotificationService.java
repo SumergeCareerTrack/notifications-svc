@@ -106,6 +106,17 @@ public class NotificationService {
         Notification savedNotification = notificationRepository.save(found);
         return notificationMapper.toNotificationResponse(savedNotification);
     }
+    public List<NotificationResponseDTO> readAllNotifications(String receiverId) {
+        List<Notification> notifications = notificationRepository.findByReceiverID(UUID.fromString(receiverId));
+        notifications.stream().map(notification -> {
+            notification.setSeen(true);
+            return notification;
+        }).collect(Collectors.toList());
+        List<Notification> savedNotifications = notificationRepository.saveAll(notifications);
+        return savedNotifications.stream()
+                .map(notificationMapper::toNotificationResponse)
+                .collect(Collectors.toList());
+    }
 
 
 }

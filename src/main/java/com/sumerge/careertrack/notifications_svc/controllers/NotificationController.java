@@ -37,6 +37,13 @@ public class NotificationController {
         NotificationResponseDTO response = notificationService.setSeenNotification(notificationId);
         return ResponseEntity.ok(response);
     }
+    @PutMapping("/all/{receiverId}")
+    public ResponseEntity<List<NotificationResponseDTO>> readAllNotifications(
+            @PathVariable String receiverId
+    ) {
+        List<NotificationResponseDTO> response = notificationService.readAllNotifications(receiverId);
+        return ResponseEntity.ok(response);
+    }
 
 
 }
