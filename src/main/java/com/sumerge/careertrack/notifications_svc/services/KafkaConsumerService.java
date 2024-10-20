@@ -10,6 +10,7 @@ import com.sumerge.careertrack.notifications_svc.exceptions.AlreadyExistsExcepti
 import com.sumerge.careertrack.notifications_svc.exceptions.DoesNotExistException;
 import com.sumerge.careertrack.notifications_svc.exceptions.NotificationsException;
 import lombok.AllArgsConstructor;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
@@ -36,6 +37,8 @@ public class KafkaConsumerService {
     @KafkaListener(topics ="${kafka.topic.name}", groupId = "${spring.kafka.consumer.group-id}")
 
     public void listen(String messageJson) throws DoesNotExistException, AlreadyExistsException, ParseException {
+        System.out.println(messageJson);
+
         JSONObject jsonObject = new JSONObject(messageJson);
         SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
         Date date = formatter.parse(jsonObject.getString("date"));
@@ -44,20 +47,24 @@ public class KafkaConsumerService {
         System.out.println("Saved: " + notification);
     }
     private NotificationRequestDTO toNotificationRequestDTo(JSONObject jsonObject,Date date) throws DoesNotExistException {
+        System.out.println(receiverList(jsonObject.getJSONArray("receiverID")).getClass()  );
+        System.out.println(receiverList(jsonObject.getJSONArray("receiverID")).get(0).getClass()  );
+
         return NotificationRequestDTO.builder()
                 .actionName(mapAction(jsonObject.getString("actionName").toLowerCase()))
                 .actorId(UUID.fromString(jsonObject.getString("actorId")))
                 .entityId(UUID.fromString(jsonObject.getString("entityId")))
                 .entityTypeName(mapEntityType(jsonObject.getString("entityTypeName").toLowerCase()))
                 .date(date)
-                .receiverID(IntStream.range(0, jsonObject.getJSONArray("receiverID").length())
-                        .mapToObj(jsonObject.getJSONArray("receiverID")::getString)
-                        .map(UUID::fromString)
-                        .collect(Collectors.toList()))
+                .receiverID(receiverList(jsonObject.getJSONArray("receiverID")))
                 .seen(jsonObject.getBoolean("seen"))
                 .build();
     }
-
+    private List<UUID> receiverList(JSONArray input){
+        return input.toList().stream()
+                .map(o -> UUID.fromString((String) o))
+                .collect(Collectors.toList());
+    }
     public EntityTypeEnum mapEntityType(String entityTypeName) throws DoesNotExistException {
         return switch (entityTypeName) {
             case "learning" -> EntityTypeEnum.LEARNING;
