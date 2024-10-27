@@ -78,11 +78,11 @@ public class NotificationService {
     private List<NotificationResponseDTO> toNotificationResponse(List<Notification> savedNotification, NotificationData savedData, Actions action, EntitiesType entitiesType) {
         return savedNotification.stream()
                 .map(notification -> NotificationResponseDTO.builder()
-                        .id(notification.getNotificationID()) // Assuming Notification has a getId() method
+                        .id(notification.getNotificationID()) 
                         .entityId(savedData.getEntityId())
                         .actorId(savedData.getActorId())
                         .name(action.getName())
-                        .entityTypeName(entitiesType.getName()) // Assuming EntitiesType has a getName() method
+                        .entityTypeName(entitiesType.getName()) 
                         .date(savedData.getDate())
                         .build())
                 .collect(Collectors.toList());
